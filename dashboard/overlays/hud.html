@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<!--
+  dashboard/overlays/hud.html
+
+  Lightweight HTML overlay for embedding over a video element or OBS scene.
+
+  Usage
+  -----
+  Open this file in a browser and use it as a Browser Source in OBS, or
+  embed it as an iframe on top of a video element in a web app.
+
+  Data binding
+  ------------
+  The overlay reads from a small JSON file at `./overlay_data.json` and
+  refreshes every second.  The pipeline (main.py) is responsible for
+  writing that file.
+
+  TODO (junior dev):
+    - Replace polling with WebSocket push from a lightweight FastAPI server
+      for sub-second latency.
+    - Add CSS animations for the goal flash effect.
+    - Make the overlay responsive (use vw/vh units instead of px).
+    - Add a shot speed indicator that briefly flashes on a shot event.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Foosball HUD Overlay</title>
+  <style>
+    /* ------------------------------------------------------------------ */
+    /* Reset & base                                                         */
+    /* ------------------------------------------------------------------ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      /* Transparent background so the overlay sits over video */
+      background: transparent;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #ffffff;
+      /* Prevent user interaction from passing through the overlay */
+      pointer-events: none;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Scoreboard — top-centre                                              */
+    /* ------------------------------------------------------------------ */
+    #scoreboard {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: 12px;
+      padding: 10px 24px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .team-name {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.75;
+    }
+
+    .score {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      min-width: 2ch;
+      text-align: center;
+    }
+
+    .score-divider {
+      font-size: 24px;
+      opacity: 0.4;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Possession bar — bottom-centre                                       */
+    /* ------------------------------------------------------------------ */
+    #possession-wrapper {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 340px;
+      background: rgba(0, 0, 0, 0.55);
+      border-radius: 10px;
+      padding: 8px 14px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .possession-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.7;
+      margin-bottom: 5px;
+    }
+
+    #possession-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #possession-bar {
+      height: 100%;
+      width: 50%; /* updated by JS */
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .possession-pct {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Zone indicator — top-right                                           */
+    /* ------------------------------------------------------------------ */
+    #zone-indicator {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #zone-indicator .label { opacity: 0.6; font-size: 10px; text-transform: uppercase; }
+    #zone-name { font-weight: 700; margin-top: 2px; }
+
+    /* ------------------------------------------------------------------ */
+    /* Goal flash                                                           */
+    /* ------------------------------------------------------------------ */
+    #goal-flash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      font-weight: 900;
+      color: #facc15;
+      text-shadow: 0 0 40px rgba(250,204,21,0.8);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Scoreboard -->
+  <div id="scoreboard">
+    <span class="team-name">Left</span>
+    <span class="score" id="score-left">0</span>
+    <span class="score-divider">:</span>
+    <span class="score" id="score-right">0</span>
+    <span class="team-name">Right</span>
+  </div>
+
+  <!-- Zone indicator -->
+  <div id="zone-indicator">
+    <div class="label">Ball Zone</div>
+    <div id="zone-name">—</div>
+  </div>
+
+  <!-- Possession bar -->
+  <div id="possession-wrapper">
+    <div class="possession-label">
+      <span>Left</span>
+      <span>Possession</span>
+      <span>Right</span>
+    </div>
+    <div id="possession-bar-bg">
+      <div id="possession-bar"></div>
+    </div>
+    <div class="possession-pct">
+      <span id="poss-left">50%</span>
+      <span id="poss-right">50%</span>
+    </div>
+  </div>
+
+  <!-- Goal flash -->
+  <div id="goal-flash">GOAL! ⚽</div>
+
+  <script>
+    /**
+     * Polls overlay_data.json once per second and updates the DOM.
+     *
+     * Expected JSON schema:
+     * {
+     *   "goals_left": 2,
+     *   "goals_right": 1,
+     *   "possession_pct_left": 58.3,
+     *   "possession_pct_right": 41.7,
+     *   "ball_zone": "midfield",
+     *   "goal_flash": false
+     * }
+     *
+     * TODO: Replace fetch-polling with WebSocket for real-time updates.
+     */
+
+    const DATA_URL = './overlay_data.json';
+    let lastGoalsLeft = 0;
+    let lastGoalsRight = 0;
+
+    async function refresh() {
+      try {
+        // Add cache-busting query param so the browser always re-fetches.
+        const res = await fetch(`${DATA_URL}?t=${Date.now()}`);
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        // Scores
+        document.getElementById('score-left').textContent = data.goals_left ?? 0;
+        document.getElementById('score-right').textContent = data.goals_right ?? 0;
+
+        // Possession bar
+        const pctLeft = data.possession_pct_left ?? 50;
+        const pctRight = data.possession_pct_right ?? 50;
+        document.getElementById('possession-bar').style.width = `${pctLeft}%`;
+        document.getElementById('poss-left').textContent = `${pctLeft.toFixed(1)}%`;
+        document.getElementById('poss-right').textContent = `${pctRight.toFixed(1)}%`;
+
+        // Zone name
+        document.getElementById('zone-name').textContent = data.ball_zone ?? '—';
+
+        // Goal flash
+        if (
+          data.goals_left > lastGoalsLeft ||
+          data.goals_right > lastGoalsRight
+        ) {
+          triggerGoalFlash();
+        }
+        lastGoalsLeft = data.goals_left ?? 0;
+        lastGoalsRight = data.goals_right ?? 0;
+
+      } catch (err) {
+        // Silently ignore fetch errors (pipeline not running yet)
+        console.debug('Overlay data not available:', err.message);
+      }
+    }
+
+    function triggerGoalFlash() {
+      const el = document.getElementById('goal-flash');
+      el.style.opacity = '1';
+      setTimeout(() => { el.style.opacity = '0'; }, 1800);
+    }
+
+    // Start polling
+    refresh();
+    setInterval(refresh, 1000);
+  </script>
+</body>
+</html>

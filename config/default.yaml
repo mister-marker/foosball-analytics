@@ -1,0 +1,90 @@
+# ============================================================
+# default.yaml – Global defaults for Foosball Analytics
+# ============================================================
+# TODO (junior dev): Review every null field below.
+#       Fill in real values once you have measured your specific
+#       table and camera setup.  Values marked with "null" are
+#       intentionally left empty — the system will raise a
+#       descriptive error if it tries to use them.
+# ============================================================
+
+# ------------------------------------
+# Table physical dimensions (cm)
+# ------------------------------------
+real_dimensions:
+  # TODO: measure your physical table and replace nulls
+  width_cm: null # e.g. 120
+  height_cm: null # e.g. 70
+  goal_width_cm: null # e.g. 20
+
+# ------------------------------------
+# Playfield pixel bounding box
+# (set AFTER perspective calibration)
+# ------------------------------------
+playfield:
+  # TODO: these are populated automatically by TableCalibrator.
+  #       Leave null until calibration has been run at least once.
+  x: null # top-left x pixel
+  y: null # top-left y pixel
+  w: null # width in pixels
+  h: null # height in pixels
+
+# ------------------------------------
+# Zone definitions (relative 0.0–1.0)
+# Coordinates are fractions of the normalised playfield width/height.
+# ------------------------------------
+zones:
+  # TODO: adjust zone boundaries to match your table layout.
+  #       Current values are rough thirds — you may want unequal splits.
+  defense:
+    x_min: 0.0
+    x_max: 0.33
+  midfield:
+    x_min: 0.33
+    x_max: 0.66
+  attack:
+    x_min: 0.66
+    x_max: 1.0
+
+# ------------------------------------
+# Goal positions (relative)
+# ------------------------------------
+goals:
+  left:
+    x: 0.0 # goal mouth is at the very left edge
+    y_min: null # TODO: e.g. 0.35  (top of goal opening)
+    y_max: null # TODO: e.g. 0.65  (bottom of goal opening)
+  right:
+    x: 1.0
+    y_min: null # TODO: same as left, mirrored
+    y_max: null
+
+# ------------------------------------
+# Ball detection settings
+# ------------------------------------
+ball:
+  model_path: null
+    # TODO: path to custom YOLO weights, e.g. "weights/ball_yolov8.pt"
+    #       Use null to fall back to the pre-trained COCO model placeholder
+  confidence_threshold: 0.4 # minimum score to accept a detection
+  class_id: null # TODO: set to the YOLO class index for "sports ball" or your custom class
+
+# ------------------------------------
+# Tracking settings
+# ------------------------------------
+tracking:
+  max_missing_frames: 10 # frames before a track is considered lost
+  interpolation_enabled: true
+  smoothing_window: 5 # rolling average window size (frames)
+
+# ------------------------------------
+# Event detection thresholds
+# ------------------------------------
+events:
+  shot_speed_threshold_px_per_s: null # TODO: calibrate from real footage, e.g. 800
+  possession_zone_hold_frames: 10 # frames ball must stay in zone to count as possession
+
+# ------------------------------------
+# Table model (which YAML to overlay)
+# ------------------------------------
+table_model: null # TODO: set to one of: leonhart, garlando, tornado, roberto, bonzini, ninestar

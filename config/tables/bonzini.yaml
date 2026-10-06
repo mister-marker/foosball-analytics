@@ -1,0 +1,50 @@
+# ============================================================
+# bonzini.yaml – Table config for Bonzini foosball tables
+# ============================================================
+# TODO (junior dev): Fill in all null fields with real values.
+# ============================================================
+
+table_name: "Bonzini"
+manufacturer: "Bonzini"
+
+real_dimensions:
+  width_cm: null
+  height_cm: null
+  goal_width_cm: null
+
+zones:
+  goalkeeper_left:
+    x_min: 0.0
+    x_max: null
+  defense_left:
+    x_min: null
+    x_max: null
+  midfield:
+    x_min: null
+    x_max: null
+  defense_right:
+    x_min: null
+    x_max: null
+  goalkeeper_right:
+    x_min: null
+    x_max: 1.0
+
+goals:
+  left:
+    x: 0.0
+    y_min: null
+    y_max: null
+  right:
+    x: 1.0
+    y_min: null
+    y_max: null
+
+ball:
+  model_path: null
+  confidence_threshold: 0.45
+  class_id: null
+
+notes: |
+  TODO: Bonzini (French-style) tables have a cork ball, which is
+  visually very different from plastic balls on other tables.
+  This significantly affects detection — consider a separate model.

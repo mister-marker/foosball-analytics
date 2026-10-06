@@ -1,0 +1,49 @@
+# --- Secrets and local state -------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# --- Data and models (large binaries, never committed) -----------------------
+data/ML_workflow/
+data/extracted_frames/
+data/videos/
+data/reports/
+data/**/*.jpg
+data/**/*.jpeg
+data/**/*.png
+data/**/*.mov
+data/**/*.mp4
+data/**/*.avi
+data/**/*.mkv
+
+# Model weights — shipped as releases or downloaded, not committed
+*.pt
+*.onnx
+*.engine
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# --- Virtual environments ----------------------------------------------------
+.venv/
+venv/
+
+# --- AI coding agents (local working files) ----------------------------------
+.aider*
+.aider.input.history
+.aider.chat.history.md
+
+
+# --- Editors and OS ----------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store

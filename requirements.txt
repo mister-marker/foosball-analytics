@@ -1,0 +1,26 @@
+# Core computer vision
+ultralytics>=8.0.0        # YOLO object detection
+opencv-python>=4.8.0      # Video capture, image processing, perspective transform
+
+# Numerical computing
+numpy>=1.24.0
+pandas>=2.0.0             # Stats and CSV export
+
+# Dashboard
+streamlit>=1.30.0         # Interactive web dashboard
+
+# Configuration
+pyyaml>=6.0               # YAML config parsing
+
+# Utilities
+scipy>=1.11.0             # Signal smoothing (trajectory)
+dataclasses-json>=0.6.0   # Optional: serialise dataclass events to JSON
+
+# Testing
+pytest>=7.4.0
+pytest-mock>=3.12.0
+
+# Dev tools (optional but recommended)
+black>=23.0.0             # Code formatting
+isort>=5.12.0             # Import sorting
+mypy>=1.5.0               # Type checking
